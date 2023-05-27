@@ -106,11 +106,11 @@ TEST(engine, example_integration) {
 
 	// specify initial state
 	auto target_robot = tobor::v1_0::universal_field_id::create_by_coord(6, 9, w);
-	auto green_robot = tobor::v1_0::universal_field_id::create_by_coord(12, 7, w);
-	auto red_robot = tobor::v1_0::universal_field_id::create_by_coord(12, 12, w);
-	auto yellow_robot = tobor::v1_0::universal_field_id::create_by_coord(6, 14, w);
+	auto rob1 = tobor::v1_0::universal_field_id::create_by_coord(12, 7, w);
+	auto rob2 = tobor::v1_0::universal_field_id::create_by_coord(12, 12, w);
+	auto rob3 = tobor::v1_0::universal_field_id::create_by_coord(6, 14, w);
 
-	std::array<tobor::v1_0::universal_field_id, 3> other_robots{ green_robot, red_robot, yellow_robot };
+	std::array<tobor::v1_0::universal_field_id, 3> other_robots{ rob1, rob2, rob3 };
 
 	//auto initial_state = tobor::v1_0::robots_position_state<3>(target_robot, std::move(other_robots));
 
@@ -120,6 +120,8 @@ TEST(engine, example_integration) {
 	auto w_analyzer = tobor::v1_0::tobor_world_analyzer<3>(w);
 
 	auto optimal_solution_length = tobor::v1_0::get_all_optimal_solutions<3>(w_analyzer , target, target_robot, std::move(other_robots));
+
+	std::cout << optimal_solution_length << std::endl;
 
 	ASSERT_EQ(9, optimal_solution_length);
 

@@ -1,8 +1,20 @@
-#include "logger.h"
+#include "mainwindow.h"
 
-int main()
+#include <QApplication>
+#include <QSplashScreen>
+#include <QTimer>
+
+int main(int argc, char *argv[])
 {
-	init_logger();
-	return 0;
-}
+    QApplication a(argc, argv);
+    MainWindow w;
 
+    QPixmap pixmap(":/Resources/Images/splashscreen.png");
+    QSplashScreen splashscreen(pixmap);
+
+    splashscreen.show();
+    QTimer::singleShot(WAIT_NORMAL, &splashscreen, SLOT(close()));
+    QTimer::singleShot(WAIT_NORMAL, &w, SLOT(show()));
+
+    return a.exec();
+}

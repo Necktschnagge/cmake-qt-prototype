@@ -1,0 +1,84 @@
+cmake_minimum_required(VERSION 3.5)
+
+project(SVG_Image_Viewer VERSION 0.1 LANGUAGES CXX)
+
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_PREFIX_PATH $ENV{HOME}/Qt/6.5.0/msvc2019_64)
+set(QT_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5")
+set(Qt5_DIR "C:/Qt/5.15.2/msvc2019_64/lib/cmake/Qt5")
+
+find_package(QT NAMES Qt5 REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+#find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS SvgWidgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Svg)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
+#find_package(Qt6 REQUIRED COMPONENTS SvgWidgets)
+#find_package(Qt6 REQUIRED COMPONENTS Svg)
+#find_package(Qt6 REQUIRED COMPONENTS Core)
+
+set(PROJECT_SOURCES
+        main.cpp
+        mainwindow.cpp
+        mainwindow.h
+        mainwindow.ui
+        svg_handler.h
+        svg_handler.cpp
+        resources.qrc
+)
+
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_executable(SVG_Image_Viewer
+        MANUAL_FINALIZATION
+        ${PROJECT_SOURCES}
+    )
+# Define target properties for Android with Qt 6 as:
+#    set_property(TARGET SVG_Image_Viewer APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
+# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
+else()
+    if(ANDROID)
+        add_library(SVG_Image_Viewer SHARED
+            ${PROJECT_SOURCES}
+        )
+# Define properties for Android with Qt 5 after find_package() calls as:
+#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+    else()
+        add_executable(SVG_Image_Viewer
+            ${PROJECT_SOURCES}
+        )
+    endif()
+endif()
+
+target_link_libraries(SVG_Image_Viewer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+#target_link_libraries(SVG_Image_Viewer PRIVATE Qt${QT_VERSION_MAJOR}::SvgWidgets)
+target_link_libraries(SVG_Image_Viewer PRIVATE Qt${QT_VERSION_MAJOR}::Svg)
+target_link_libraries(SVG_Image_Viewer PRIVATE Qt${QT_VERSION_MAJOR}::Core)
+#target_link_libraries(SVG_Image_Viewer PRIVATE Qt6::SvgWidgets)
+#target_link_libraries(SVG_Image_Viewer PRIVATE Qt6::Svg)
+#target_link_libraries(SVG_Image_Viewer PRIVATE Qt6::Core)
+
+set_target_properties(SVG_Image_Viewer PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    MACOSX_BUNDLE TRUE
+    WIN32_EXECUTABLE TRUE
+)
+
+install(TARGETS SVG_Image_Viewer
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_finalize_executable(SVG_Image_Viewer)
+endif()
+
+#add_custom_command(TARGET SVG_Image_Viewer POST_BUILD        # Adds a post-build event to MyTest
+#    COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+#        "C:/Qt/6.5.0/msvc2019_64/bin/"      # <--this is in-file
+#        $<TARGET_FILE_DIR:MyTest>)                 # <--this is out-file path

@@ -1,74 +1,83 @@
-cmake_minimum_required(VERSION 3.13.4)
+cmake_minimum_required(VERSION 3.5)
 
+project(Tobor_try_46757298346582354 VERSION 0.1 LANGUAGES CXX)
 
-############### Names ###############
-set(PROJECT_NAME Tobor)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
-
-############### Preprocessor Macros ###############
-add_compile_definitions(GIT_REPOSITORY_URL="https://github.com/Necktschnagge/cmake-qt-prototype")
-
-
-############### Project Decklaration ###############
-project(${PROJECT_NAME} VERSION 1.0)
-
-
-############### Check Platform ###############
-message("CMake is checking for CMAKE_SYSTEM_PROCESSOR containing arm to detect if running on Raspberry Pi:")
-message("CMAKE_SYSTEM_PROCESSOR is: " ${CMAKE_SYSTEM_PROCESSOR})
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-	message("Running on Raspberry Pi.")
-	set(on_target_platform true)
-else(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-	message("Running on Development or Test Platform.")
-	set(on_target_platform false)
-endif()
-if(UNIX AND NOT APPLE)
-	set(LINUX true)
-else()
-	set(LINUX false)
-endif()
-if (WIN32)
-	message("Running on WIN32.")
-endif()
-if (LINUX)
-	message("Running on LINUX.")
-endif()
-if (APPLE)
-	message("Running on APPLE.")
-endif()
-if (UNIX)
-	message("Running on UNIX.")
-endif()
-
-
-############### Language and Flags ###############
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_EXTENSIONS False)
-set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ob2 /DNDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "/MT /Zi /Ob0 /Od /RTC1")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
-############### Libraries ###############
-include_directories(SYSTEM extern/spdlog/include)
-add_subdirectory(extern/googletest)
-
-
-############### Sources ###############
-add_subdirectory(src)
-
-
-############### Testing ###############
-add_subdirectory(test)
-enable_testing()
-
-if(MSVC)
-  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+if (DEFINED USE_QT5)
+	set(USE_QT6 FALSE)
+	message("USE QT 5")
 else()
-  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic -Werror)
+	set(USE_QT6 TRUE)
+	message("USE QT 6")
+
 endif()
 
 
-############### Visual Studio ###############
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})#Set Visualo Studio start-up project, so that one can directly run the debugger.
+if(USE_QT6)
+    find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Svg SvgWidgets)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Svg SvgWidgets)
+
+else()
+    find_package(QT NAMES Qt5 REQUIRED COMPONENTS Widgets Svg)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Svg)
+
+endif()
+
+
+set(PROJECT_SOURCES
+        main.cpp
+        mainwindow.cpp
+        mainwindow.h
+        mainwindow.ui
+)
+
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_executable(Tobor_try_46757298346582354
+        MANUAL_FINALIZATION
+        ${PROJECT_SOURCES}
+    )
+# Define target properties for Android with Qt 6 as:
+#    set_property(TARGET Tobor_try_46757298346582354 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
+# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
+else()
+    if(ANDROID)
+        add_library(Tobor_try_46757298346582354 SHARED
+            ${PROJECT_SOURCES}
+        )
+# Define properties for Android with Qt 5 after find_package() calls as:
+#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+    else()
+        add_executable(Tobor_try_46757298346582354
+            ${PROJECT_SOURCES}
+        )
+    endif()
+endif()
+
+if(USE_QT6)
+    target_link_libraries(Tobor_try_46757298346582354 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Svg Qt${QT_VERSION_MAJOR}::SvgWidgets)
+else()
+    target_link_libraries(Tobor_try_46757298346582354 PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Svg)
+endif()
+
+set_target_properties(Tobor_try_46757298346582354 PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    MACOSX_BUNDLE TRUE
+    WIN32_EXECUTABLE TRUE
+)
+
+install(TARGETS Tobor_try_46757298346582354
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_finalize_executable(Tobor_try_46757298346582354)
+endif()

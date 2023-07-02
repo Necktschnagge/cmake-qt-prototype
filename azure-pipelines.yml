@@ -54,18 +54,50 @@ pool:
 #   condition: and(succeeded(), ne( variables['Agent.OSArchitecture'], 'ARM'), ne( variables['Agent.OS'], 'Windows_NT'))
 
 steps:
+ - script: sudo apt-get install qtbase5-dev libqt5svg5-dev qt6-base-dev libqt6svg6 libqt6svg6-dev
+   displayName: "Install Qt (Linux)"
+   condition: and(succeeded(), eq( variables['Agent.OS'], 'Linux'), eq( variables['imageName'], 'ubuntu-22.04'))
+ - script: sudo apt-get install qtbase5-dev libqt5svg5-dev
+   displayName: "Install Qt (Linux)"
+   condition: and(succeeded(), eq( variables['Agent.OS'], 'Linux'), eq( variables['imageName'], 'ubuntu-20.04'))
+ - script: brew install qt@5 qt@6
+   displayName: "Install Qt (Darwin)"
+   condition: and(succeeded(), eq( variables['Agent.OS'], 'Darwin'))
+# - script: choco install -y qt6-base-dev
+#   displayName: "Install Qt (Windows)"
+#   condition: and(succeeded(), eq( variables['Agent.OS'], 'Windows_NT'))
  - script: git submodule update --init --recursive
    displayName: "Init Git Submodules"
    condition: succeeded()
+ - script: pip install aqtinstall
+   displayName: "install aqt"
+   condition: and(succeeded(), eq( variables['Agent.OS'], 'Windows_NT'))
+ - script: |
+    mkdir C:\Qt
+    aqt install-qt --outputdir C:\Qt windows desktop 6.5.1 win64_msvc2019_64
+   displayName: "aqt install qt 6.5.1"
+   condition: and(succeeded(), eq( variables['Agent.OS'], 'Windows_NT'))
+ - script: aqt list-qt windows desktop
+   displayName: "check aqt"
+   condition: and(succeeded(), eq( variables['Agent.OS'], 'Windows_NT'))
+ - script: tree "C:\Qt\"
+   displayName: "check files"
+   condition: and(succeeded(), eq( variables['Agent.OS'], 'Windows_NT'))
+ - script: cmake -S . -B ./build/ -DCMAKE_PREFIX_PATH="C:\Qt\6.5.1\msvc2019_64"
+   displayName: "CMake: Create Project"
+   condition: and(succeeded(), eq( variables['Agent.OS'], 'Windows_NT'))
  - script: cmake -S . -B ./build/
    displayName: "CMake: Create Project"
-   condition: succeeded()
+   condition: and(succeeded(), ne( variables['Agent.OS'], 'Windows_NT'), ne( variables['imageName'], 'ubuntu-20.04'))
+ - script: cmake -S . -B ./build/ -DUSE_QT5=FOO
+   displayName: "CMake: Create Project"
+   condition: and(succeeded(), ne( variables['Agent.OS'], 'Windows_NT'), eq( variables['imageName'], 'ubuntu-20.04'))
  - script: cmake --build ./build
    displayName: "CMake: Compile and Link"
    condition: succeeded()
- - script: ./build/test/TEST-$(project_name)
-   displayName: "Run Tests on Linux / Mac OS"
-   condition: and(succeeded(), ne( variables['Agent.OS'], 'Windows_NT'))
- - script: .\build\test\Debug\TEST-$(project_name).exe
-   displayName: "Run Tests on Windows"
-   condition: and(succeeded(), eq( variables['Agent.OS'], 'Windows_NT' ))
+# - script: ./build/test/TEST-$(project_name)
+#   displayName: "Run Tests on Linux / Mac OS"
+#   condition: and(succeeded(), ne( variables['Agent.OS'], 'Windows_NT'))
+# - script: .\build\test\Debug\TEST-$(project_name).exe
+#   displayName: "Run Tests on Windows"
+#   condition: and(succeeded(), eq( variables['Agent.OS'], 'Windows_NT' ))

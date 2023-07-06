@@ -168,6 +168,7 @@ namespace tobor {
 					throw blocked_center_error();
 				if (y_blocked_size == y_size)
 					throw blocked_center_error();
+
 				const std::size_t x_begin{ (x_size - x_blocked_size) / 2 };
 				const std::size_t x_end{ x_begin + x_blocked_size };
 				const std::size_t y_begin{ (y_size - y_blocked_size) / 2 };
@@ -185,7 +186,6 @@ namespace tobor {
 					}
 				}
 			}
-
 		};
 
 		class universal_field_id { // OK, add some memory-efficient variant!
@@ -631,6 +631,56 @@ namespace tobor {
 			move_candidate(const robot_move& m, const std::pair<universal_field_id, bool>& n) : move(m), next_field_paired_enable(n) {}
 		};
 
+		template<std::size_t COUNT_NON_TARGET_ROBOTS>
+		auto trace(typename partial_solution_connections<COUNT_NON_TARGET_ROBOTS>::map_iterator_type iter) -> std::string {
+			if (iter->second.steps == 0) {
+				return std::string();
+			}
+			auto [pre, move] = iter->second.predecessors[0];
+			std::string s_dir;
+			switch (move.direction) {
+			case robot_move::NORTH: s_dir = "N";
+				break;
+			case robot_move::EAST: s_dir = "E";
+				break;
+			case robot_move::SOUTH: s_dir = "S";
+				break;
+			case robot_move::WEST: s_dir = "W";
+				break;
+			}
+			return trace<COUNT_NON_TARGET_ROBOTS>(pre) + "   " + (move.robot_id == 3 ? "t" : std::to_string(move.robot_id)) + ":" + s_dir;
+		}
+
+		template<std::size_t COUNT_NON_TARGET_ROBOTS>
+		auto trace_all(typename partial_solution_connections<COUNT_NON_TARGET_ROBOTS>::map_iterator_type iter) -> std::string {
+			if (iter->second.steps == 0) {
+				return std::string();
+			}
+			std::string collect;
+			for (const auto pre_iter : iter->second.predecessors) {
+				auto [pre, move] = pre_iter;
+				std::string s_dir;
+				switch (move.direction) {
+				case robot_move::NORTH: s_dir = "N";
+					break;
+				case robot_move::EAST: s_dir = "E";
+					break;
+				case robot_move::SOUTH: s_dir = "S";
+					break;
+				case robot_move::WEST: s_dir = "W";
+					break;
+				}
+				const std::size_t c = 7;
+				collect += trace_all<COUNT_NON_TARGET_ROBOTS>(pre);
+				for (int i = 0; i < c * (iter->second.steps - 1); ++i) {
+					collect += std::string(" ");
+				}
+				collect += (move.robot_id == 3 ? "t" : std::to_string(move.robot_id)) + ":" + s_dir + "\n";
+			}
+			return collect;
+		}
+
+
 		template<std::size_t COUNT_NON_TARGET_ROBOTS = 3>
 		inline std::size_t get_all_optimal_solutions(
 			tobor_world_analyzer<COUNT_NON_TARGET_ROBOTS>& world_analyzer,
@@ -758,6 +808,35 @@ namespace tobor {
 				}
 
 			}
+
+
+			for (const auto& map_iter : *to_be_explored.rbegin()) {
+				if (map_iter->first.target_robot == p_target_field) {
+					std::cout << trace_all<COUNT_NON_TARGET_ROBOTS>(map_iter) << std::endl;
+					//break;
+					/*
+					// map_iter is a state that reaches target s.t. there is an optimal path reaching this state.
+					for (const auto& p : map_iter->second.predecessors) {
+						// std::get<0>(p) predecessor state
+						// std::get<1>(p) move information
+
+					}
+					*/
+				}
+			}
+
+
+			for (std::size_t level{0}; level < to_be_explored.size(); ++level) {
+				std::cout
+					<< level
+					<< "   :   "
+					<< to_be_explored[level].size()
+					<< "   :   "
+					<< ((level == 0) ? "" : std::to_string(static_cast<double>(to_be_explored[level].size()) / to_be_explored[level - 1].size()))
+					<< std::endl;
+			}
+
+
 			return optimal_solution_size;
 
 		}
